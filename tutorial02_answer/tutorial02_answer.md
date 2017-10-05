@@ -164,3 +164,8 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
 本单元的习题比上个单元较有挑战性一些，所以我花了多一些篇幅在解答篇。纯以语法来说，数字类型已经是 JSON 中最复杂的类型。如果同学能完成本单元的练习（特别是第 3 条），之后的字符串、数组和对象的语法一定难不到你。然而，接下来也会有一些新挑战，例如内存管理、数据结构、编码等，希望你能满载而归。
 
 如果你遇到问题，有不理解的地方，或是有建议，都欢迎在评论或 [issue](https://github.com/miloyip/json-tutorial/issues) 中提出，让所有人一起讨论。
+
+## 6.实现过程记录
+
+- 一开始实现校验数字是把整个字符串校验完(见此次[commit](https://github.com/chenpengcong/json-tutorial/commit/80b28d371843d6e0d155d8980d087b92d840e47a))，其实不必，比如0123这个字符串，lept_parse_number()虽然返回LEPT_PARSE_OK，但是lept_parse()函数会检测到达字符串还未遍历到结束符，返回LEPT_PARSE_ROOT_NOT_SINGULAR。因此简化了lept_parse_number()的实现([优化后的代码](https://github.com/chenpengcong/json-tutorial/commit/9dd8bb692bb9ce9aeda78c85c477d430b8fec618))
+- 

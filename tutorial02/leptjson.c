@@ -3,6 +3,8 @@
 #include <stdlib.h>  /* NULL, strtod() */
 #include <string.h>
 #include "math.h"
+#include "errno.h"
+
 
 #define EXPECT(c, ch)       do { assert(*c->json == (ch)); c->json++; } while(0)
 
@@ -36,14 +38,14 @@ static int lept_parse_literal(lept_context *c, lept_value *v, int type, char *st
 }
 
 
-static void check_number_int(char **number)
+static void check_number_int(const char **number)
 {
     while (**number != '\0' && (ISDIGIT(**number))) {
         *number += 1;
     }
 }
 
-static int check_number_exp(char **number)
+static int check_number_exp(const char **number)
 {
     *number += 1;
     if (**number == '+' || **number == '-') {
@@ -61,7 +63,7 @@ static int check_number_exp(char **number)
 
 
 static int lept_parse_number(lept_context* c, lept_value* v) {
-    char *json = c->json;
+    const char *json = c->json;
     if (*json == '-') {
         json += 1;
     }
@@ -70,13 +72,9 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
     }
 
     if (ISDIGIT1TO9(*json)) {
-        json += 1;
         check_number_int(&json);    
     } else {
         json += 1;
-        if (*json != '.' && *json != '\0') {
-            return LEPT_PARSE_ROOT_NOT_SINGULAR;
-        }
     }
 
     if (*json == '.') {
@@ -85,28 +83,15 @@ static int lept_parse_number(lept_context* c, lept_value* v) {
             return LEPT_PARSE_INVALID_VALUE;
         }
         check_number_int(&json);
-        if (*(json) == 'e' || *(json) == 'E') {
-            if (check_number_exp(&json) == LEPT_PARSE_INVALID_VALUE) {
-                return LEPT_PARSE_INVALID_VALUE;
-            }
-        } else if (*(json) == '\0') {
-
-        } else {
-            return LEPT_PARSE_INVALID_VALUE;
-        }
-    } else if (*json == 'e' || *json == 'E') {
-            if (check_number_exp(&json) == LEPT_PARSE_INVALID_VALUE) {
-                return LEPT_PARSE_INVALID_VALUE;
-            }
-    } else if (*json == '\0') {
-        
-    } else {
-        return LEPT_PARSE_INVALID_VALUE;
     }
-    
-    /* \TODO validate number */
+    if (*json == 'e' || *json == 'E') {
+            if (check_number_exp(&json) == LEPT_PARSE_INVALID_VALUE) {
+                return LEPT_PARSE_INVALID_VALUE;
+            }
+    }
+    errno = 0;
     v->n = strtod(c->json, NULL);
-    if (v->n == HUGE_VAL || v->n == -HUGE_VAL) {
+    if ((errno == ERANGE) && (v->n == HUGE_VAL || v->n == -HUGE_VAL)) {
         return LEPT_PARSE_NUMBER_TOO_BIG;
     }
     c->json = json;
